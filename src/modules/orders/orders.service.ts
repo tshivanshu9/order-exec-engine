@@ -1,5 +1,5 @@
 import { v4 as uuid } from 'uuid';
-import { CreateOrderRequest, Order } from './types/orders.types';
+import { CreateOrderRequest, Order, OrderFailure } from './types/orders.types';
 import { OrderStatus } from '../../constants/enums';
 import { orderStore } from './orders.store';
 import { wsManager } from './websocket/ws.manager';
@@ -46,11 +46,31 @@ export class OrderService {
   }
 
   async getOrder(orderId: string): Promise<Order | null> {
-    return orderStore.get(orderId);
+    return orderStore.getById(orderId);
+  }
+
+  async listOrders(
+    page: number,
+    limit: number
+  ): Promise<{
+    data: Order[];
+    paginate: { totalCount: number; limit: number };
+  }> {
+    return orderStore.listAll(page, limit);
   }
 
   async logOrderFailure(orderId: string, reason: string): Promise<void> {
     await orderFailuresStore.create(orderId, reason);
+  }
+
+  async listOrderFailures(
+    page: number,
+    limit: number
+  ): Promise<{
+    data: OrderFailure[];
+    paginate: { totalCount: number; limit: number };
+  }> {
+    return orderFailuresStore.listAllFailures(page, limit);
   }
 }
 

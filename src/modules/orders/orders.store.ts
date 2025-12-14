@@ -1,5 +1,6 @@
 import { pgPool } from '../../db/postgres';
 import { toSnake } from '../../utils/utility.service';
+import { OrderMapper } from './mapper/orders.mapper';
 import { Order } from './types/orders.types';
 
 class OrderStore {
@@ -14,24 +15,12 @@ class OrderStore {
     );
   }
 
-  async get(orderId: string): Promise<Order | null> {
+  async getById(orderId: string): Promise<Order | null> {
     const res = await pgPool.query(`SELECT * FROM orders WHERE id = $1`, [
       orderId,
     ]);
     if (!res?.rows?.length) return null;
-    const row = res.rows[0];
-    return {
-      id: row.id,
-      tokenIn: row.token_in,
-      tokenOut: row.token_out,
-      amount: row.amount,
-      status: row.status,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      selectedDex: row.selected_dex,
-      txHash: row.tx_hash,
-      executedPrice: row.executed_price,
-    };
+    return OrderMapper.toOrder(res.rows[0]);
   }
 
   async update(orderId: string, update: Partial<Order>) {
@@ -57,6 +46,37 @@ class OrderStore {
     );
 
     return res.rows[0];
+  }
+
+  async listAll(
+    page: number,
+    limit: number
+  ): Promise<{
+    data: Order[];
+    paginate: { totalCount: number; limit: number };
+  }> {
+    const offset = (page - 1) * limit;
+    const [data, count] = await Promise.all([
+      pgPool.query(
+        `
+        SELECT *
+        FROM orders
+        ORDER BY created_at DESC
+        LIMIT $1 OFFSET $2
+        `,
+        [limit, offset]
+      ),
+      pgPool.query(
+        `
+        SELECT COUNT(*)::int AS total
+        FROM orders
+        `
+      ),
+    ]);
+    return {
+      data: OrderMapper.toOrderList(data.rows),
+      paginate: { totalCount: count?.rows[0]?.total, limit },
+    };
   }
 }
 

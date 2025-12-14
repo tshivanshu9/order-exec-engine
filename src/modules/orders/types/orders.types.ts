@@ -18,3 +18,11 @@ export interface Order {
   executedPrice?: number | null;
   txHash?: string | null;
 }
+
+export interface OrderFailure {
+  id: string;
+  orderId: string;
+  reason: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
