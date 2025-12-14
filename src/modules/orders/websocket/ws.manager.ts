@@ -24,8 +24,7 @@ class WebSocketManager {
 
     const message = JSON.stringify(payload);
     for (const socket of sockets) {
-      if (socket.readyState === WebSocket.OPEN)
-        socket.send(message);
+      if (socket.readyState === WebSocket.OPEN) socket.send(message);
     }
   }
 }

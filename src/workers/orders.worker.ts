@@ -60,11 +60,12 @@ export const orderWorker = new Worker(
   }
 );
 
-orderWorker.on('failed', (job, err) => {
+orderWorker.on('failed', async (job, err) => {
   const orderId = job?.data?.orderId;
   if (!orderId) return;
 
-  orderService.updateOrderStatus(orderId, OrderStatus.FAILED, {
-    failureReason: err.message,
-  });
+  await Promise.all([
+    orderService.updateOrderStatus(orderId, OrderStatus.FAILED),
+    orderService.logOrderFailure(orderId, err.message),
+  ]);
 });

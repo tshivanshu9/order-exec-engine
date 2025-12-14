@@ -23,7 +23,6 @@ export default async function wsOrderRoutes(fastify: FastifyInstance) {
           selectedDex: order.selectedDex,
           executedPrice: order.executedPrice,
           txHash: order.txHash,
-          failureReason: order.failureReason,
         })
       );
     }

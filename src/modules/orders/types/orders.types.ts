@@ -17,5 +17,4 @@ export interface Order {
   selectedDex?: string | null;
   executedPrice?: number | null;
   txHash?: string | null;
-  failureReason?: string | null;
 }

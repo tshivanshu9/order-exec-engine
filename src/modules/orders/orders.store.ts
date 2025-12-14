@@ -10,21 +10,14 @@ class OrderStore {
       (id, token_in, token_out, amount, status)
       VALUES ($1,$2,$3,$4,$5)
       `,
-      [
-        order.id,
-        order.tokenIn,
-        order.tokenOut,
-        order.amount,
-        order.status,
-      ]
+      [order.id, order.tokenIn, order.tokenOut, order.amount, order.status]
     );
   }
 
   async get(orderId: string): Promise<Order | null> {
-    const res = await pgPool.query(
-      `SELECT * FROM orders WHERE id = $1`,
-      [orderId]
-    );
+    const res = await pgPool.query(`SELECT * FROM orders WHERE id = $1`, [
+      orderId,
+    ]);
     if (!res?.rows?.length) return null;
     const row = res.rows[0];
     return {
@@ -38,7 +31,6 @@ class OrderStore {
       selectedDex: row.selected_dex,
       txHash: row.tx_hash,
       executedPrice: row.executed_price,
-      failureReason: row.failure_reason,
     };
   }
 

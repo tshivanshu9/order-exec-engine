@@ -4,6 +4,7 @@ import { OrderStatus } from '../../constants/enums';
 import { orderStore } from './orders.store';
 import { wsManager } from './websocket/ws.manager';
 import { orderQueue } from '../../queue/order.queue';
+import { orderFailuresStore } from './order-failures.store';
 
 export class OrderService {
   async createOrder(payload: CreateOrderRequest): Promise<Order> {
@@ -46,6 +47,10 @@ export class OrderService {
 
   async getOrder(orderId: string): Promise<Order | null> {
     return orderStore.get(orderId);
+  }
+
+  async logOrderFailure(orderId: string, reason: string): Promise<void> {
+    await orderFailuresStore.create(orderId, reason);
   }
 }
 
