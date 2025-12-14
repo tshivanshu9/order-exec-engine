@@ -65,6 +65,6 @@ orderWorker.on('failed', (job, err) => {
   if (!orderId) return;
 
   orderService.updateOrderStatus(orderId, OrderStatus.FAILED, {
-    reason: err.message,
+    failureReason: err.message,
   });
 });
