@@ -1,4 +1,4 @@
-import { Worker } from 'bullmq';
+import { Job, Worker } from 'bullmq';
 import { redisConnection } from '../queue/redis';
 import { OrderStatus } from '../constants/enums';
 import { orderService } from '../modules/orders/orders.service';
@@ -7,34 +7,47 @@ import { routeOrder } from '../modules/dex/dex.router';
 
 export const orderWorker = new Worker(
   'order-execution',
-  async job => {
+  async (job: Job) => {
     const { orderId } = job.data;
     const start = Date.now();
-    console.log(`[WORKER] START ${orderId}`);
-    console.log(`[WORKER] Processing order ${orderId}`);
 
-    const order = await orderService.getOrder(orderId);
-    if (!order) {
-      console.log(`[WORKER] Order ${orderId} not found`);
-      return;
+    try {
+      console.log(`[WORKER] START ${orderId}`);
+
+      orderService.updateOrderStatus(orderId, OrderStatus.ROUTING);
+
+      if (Math.random() < 0.2) {
+        throw new Error('DEX quote timeout');
+      }
+
+      const order = await orderService.getOrder(orderId);
+      if (!order) {
+        throw new Error(`Order not found: ${orderId}`);
+      }
+
+      const route = await routeOrder(
+        order.tokenIn,
+        order.tokenOut,
+        order.amount
+      );
+
+      orderService.updateOrderStatus(orderId, OrderStatus.BUILDING, {
+        selectedDex: route.bestDex,
+        price: route.bestQuote.price,
+      });
+
+      await sleep(1500);
+
+      orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED, {
+        txHash: `mock_tx_${Date.now()}`,
+        executedPrice: route.bestQuote.price,
+      });
+
+      console.log(`[WORKER] END ${orderId} duration=${Date.now() - start}ms`);
+    } catch (err: any) {
+      console.error(`[WORKER] ERROR ${orderId}`, err.message);
+      throw err;
     }
-    orderService.updateOrderStatus(orderId, OrderStatus.ROUTING);
-    const route = await routeOrder(order.tokenIn, order.tokenOut, order.amount);
-    await sleep(500);
-
-    orderService.updateOrderStatus(orderId, OrderStatus.BUILDING, {
-      selectedDex: route.bestDex,
-      price: route.bestQuote.price,
-    });
-    await sleep(500);
-
-    await sleep(1500);
-
-    orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED, {
-      txHash: `mock_tx_${Date.now()}`,
-      executedPrice: route.bestQuote.price,
-    });
-    console.log(`[WORKER] END ${orderId} duration=${Date.now() - start}ms`);
   },
   {
     connection: redisConnection,
@@ -45,3 +58,12 @@ export const orderWorker = new Worker(
     },
   }
 );
+
+orderWorker.on('failed', (job, err) => {
+  const orderId = job?.data?.orderId;
+  if (!orderId) return;
+
+  orderService.updateOrderStatus(orderId, OrderStatus.FAILED, {
+    reason: err.message,
+  });
+});
