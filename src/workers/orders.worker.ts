@@ -13,7 +13,7 @@ export const orderWorker = new Worker(
 
     try {
       console.log(`[WORKER] START ${orderId}`);
-
+      await sleep(5000);
       orderService.updateOrderStatus(orderId, OrderStatus.ROUTING);
 
       if (Math.random() < 0.2) {
@@ -31,12 +31,13 @@ export const orderWorker = new Worker(
         order.amount
       );
 
+      await sleep(3000);
       orderService.updateOrderStatus(orderId, OrderStatus.BUILDING, {
         selectedDex: route.bestDex,
-        price: route.bestQuote.price,
+        amount: route.bestQuote.price,
       });
 
-      await sleep(1500);
+      await sleep(3000);
 
       orderService.updateOrderStatus(orderId, OrderStatus.CONFIRMED, {
         txHash: `mock_tx_${Date.now()}`,

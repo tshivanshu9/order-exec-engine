@@ -14,4 +14,8 @@ export interface Order {
   status: OrderStatus;
   createdAt: Date;
   updatedAt: Date;
+  selectedDex?: string | null;
+  executedPrice?: number | null;
+  txHash?: string | null;
+  failureReason?: string | null;
 }

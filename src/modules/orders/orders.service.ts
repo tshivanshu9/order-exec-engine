@@ -19,19 +19,19 @@ export class OrderService {
       updatedAt: now,
     };
 
-    orderStore.create(order);
+    await orderStore.create(order);
     await orderQueue.add('execute-order', {
       orderId: order.id,
     });
     return order;
   }
 
-  updateOrderStatus(
+  async updateOrderStatus(
     orderId: string,
     status: OrderStatus,
     extra?: Record<string, any>
   ) {
-    const updated = orderStore.update(orderId, { status });
+    const updated = await orderStore.update(orderId, { status, ...extra });
 
     if (!updated) return;
 
@@ -44,7 +44,7 @@ export class OrderService {
     });
   }
 
-  async getOrder(orderId: string): Promise<Order | undefined> {
+  async getOrder(orderId: string): Promise<Order | null> {
     return orderStore.get(orderId);
   }
 }
