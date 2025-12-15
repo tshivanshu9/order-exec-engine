@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { wsManager } from './websocket/ws.manager';
-import { orderService } from './orders.service';
+import { activeOrderStore } from './active-orders.store';
+import { SocketEventType } from '../../constants/enums';
 
 export default async function wsOrderRoutes(fastify: FastifyInstance) {
   fastify.get('/ws/orders', { websocket: true }, async (socket, request) => {
@@ -11,21 +12,21 @@ export default async function wsOrderRoutes(fastify: FastifyInstance) {
       return;
     }
 
-    wsManager.subscribe(orderId, socket);
-    socket.send(JSON.stringify({ msg: 'connected' }));
-
-    const order = await orderService.getOrder(orderId);
-    if (order) {
+    const activeOrder = await activeOrderStore.get(orderId);
+    if (activeOrder) {
       socket.send(
         JSON.stringify({
-          orderId: order.id,
-          status: order.status,
-          selectedDex: order.selectedDex,
-          executedPrice: order.executedPrice,
-          txHash: order.txHash,
+          type: SocketEventType.SNAPSHOT,
+          orderId,
+          status: activeOrder.status,
+          selectedDex: activeOrder.selectedDex,
+          executedPrice: activeOrder.executedPrice,
+          txHash: activeOrder.txHash,
         })
       );
     }
+
+    wsManager.subscribe(orderId, socket);
 
     socket.on('close', () => {
       wsManager.unsubscribe(orderId, socket);

@@ -1,5 +1,5 @@
 import { Job, Worker } from 'bullmq';
-import { redisConnection } from '../queue/redis';
+import { redisConnection } from '../redis/redis';
 import { OrderStatus } from '../constants/enums';
 import { orderService } from '../modules/orders/orders.service';
 import { sleep } from '../utils/utility.service';

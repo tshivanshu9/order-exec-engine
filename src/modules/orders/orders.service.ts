@@ -1,10 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { CreateOrderRequest, Order, OrderFailure } from './types/orders.types';
-import { OrderStatus } from '../../constants/enums';
+import { OrderStatus, SocketEventType } from '../../constants/enums';
 import { orderStore } from './orders.store';
 import { wsManager } from './websocket/ws.manager';
 import { orderQueue } from '../../queue/order.queue';
 import { orderFailuresStore } from './order-failures.store';
+import { activeOrderStore } from './active-orders.store';
+import { OrderMapper } from './mapper/orders.mapper';
 
 export class OrderService {
   async createOrder(payload: CreateOrderRequest): Promise<Order> {
@@ -31,14 +33,21 @@ export class OrderService {
     orderId: string,
     status: OrderStatus,
     extra?: Record<string, any>
-  ) {
+  ): Promise<void> {
     const updated = await orderStore.update(orderId, { status, ...extra });
-
     if (!updated) return;
 
-    console.log(`[ORDER ${orderId}] status=${status}`, extra ? extra : '');
+    console.log(`[ORDER ${orderId}] status=${status}`, extra ?? '');
+
+    const isTerminal =
+      status === OrderStatus.CONFIRMED || status === OrderStatus.FAILED;
+
+    if (!isTerminal) {
+      await activeOrderStore.set(OrderMapper.toActiveOrder(updated));
+    } else await activeOrderStore.remove(orderId);
 
     wsManager.emit(orderId, {
+      type: SocketEventType.EVENT,
       orderId,
       status,
       ...extra,

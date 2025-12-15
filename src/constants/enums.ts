@@ -11,3 +11,8 @@ export enum DexType {
   RAYDIUM = 'raydium',
   METEORA = 'meteora',
 }
+
+export enum SocketEventType {
+  SNAPSHOT = 'snapshot',
+  EVENT = 'event',
+}

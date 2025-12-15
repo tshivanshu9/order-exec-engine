@@ -44,8 +44,8 @@ class OrderStore {
       `,
       values
     );
-
-    return res.rows[0];
+    if (!res?.rows?.length) return null;
+    return OrderMapper.toOrder(res.rows[0]);
   }
 
   async listAll(

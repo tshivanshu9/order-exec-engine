@@ -26,3 +26,18 @@ export interface OrderFailure {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface ActiveOrder {
+  id: string;
+  status: OrderStatus;
+  tokenIn: string;
+  tokenOut: string;
+  amount: number;
+
+  selectedDex?: string;
+  executedPrice?: number;
+  txHash?: string;
+  failureReason?: string;
+
+  updatedAt: string;
+}
