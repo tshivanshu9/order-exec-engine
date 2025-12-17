@@ -2,11 +2,11 @@
 
 A production-style backend service that simulates a real-world **crypto order execution engine** with:
 
-* Smart DEX routing (Raydium vs Meteora)
-* Concurrent order execution using queues
-* Real-time order lifecycle streaming via WebSockets
-* Redis-backed active order tracking
-* PostgreSQL-backed order & failure history
+- Smart DEX routing (Raydium vs Meteora)
+- Concurrent order execution using queues
+- Real-time order lifecycle streaming via WebSockets
+- Redis-backed active order tracking
+- PostgreSQL-backed order & failure history
 
 This project is intentionally designed to resemble **how real trading / execution systems are built**, not just a demo app.
 
@@ -40,20 +40,19 @@ Client
 
 (Current implementation: **Market Orders**)
 
-* Immediate execution at best available price
-* Designed to be extensible for:
-
-  * Limit Orders
-  * Sniper Orders
+- Immediate execution at best available price
+- Designed to be extensible for:
+  - Limit Orders
+  - Sniper Orders
 
 ---
 
 ### 2️⃣ Smart DEX Routing
 
-* Queries **Raydium** and **Meteora**
-* Compares quotes
-* Automatically routes to best price
-* Logs routing decisions for transparency
+- Queries **Raydium** and **Meteora**
+- Compares quotes
+- Automatically routes to best price
+- Logs routing decisions for transparency
 
 ```ts
 [ROUTER] Selected raydium | Raydium=99.96 Meteora=97.88
@@ -63,9 +62,9 @@ Client
 
 ### 3️⃣ HTTP → WebSocket Pattern
 
-* Orders are created via HTTP
-* Clients subscribe to live updates via WebSocket
-* Same backend handles both protocols
+- Orders are created via HTTP
+- Clients subscribe to live updates via WebSocket
+- Same backend handles both protocols
 
 **Flow:**
 
@@ -75,6 +74,7 @@ Client
    ```
    ws://localhost:3000/ws/orders?orderId=...
    ```
+
 3. Server streams lifecycle updates
 
 ---
@@ -83,18 +83,18 @@ Client
 
 Order states are pushed live:
 
-* `PENDING`
-* `ROUTING`
-* `BUILDING`
-* `CONFIRMED`
-* `FAILED`
+- `PENDING`
+- `ROUTING`
+- `BUILDING`
+- `CONFIRMED`
+- `FAILED`
 
 Two WebSocket event types:
 
 ```ts
 enum SocketEventType {
   SNAPSHOT = 'SNAPSHOT', // On connection
-  EVENT = 'EVENT',       // Live updates
+  EVENT = 'EVENT', // Live updates
 }
 ```
 
@@ -102,17 +102,16 @@ enum SocketEventType {
 
 ### 5️⃣ Active Orders (Redis)
 
-* Redis stores **only in-flight orders**
-* Ensures clients never miss updates
-* Enables recovery after:
-
-  * Server restarts
-  * WebSocket reconnects
+- Redis stores **only in-flight orders**
+- Ensures clients never miss updates
+- Enables recovery after:
+  - Server restarts
+  - WebSocket reconnects
 
 **Lifecycle:**
 
-* Added to Redis when order is active
-* Removed immediately on terminal state
+- Added to Redis when order is active
+- Removed immediately on terminal state
 
 ```txt
 active:order:{orderId}
@@ -122,11 +121,10 @@ active:order:{orderId}
 
 ### 6️⃣ Concurrent Processing & Rate Limiting
 
-* BullMQ worker
-* Configured for:
-
-  * **10 concurrent orders**
-  * **100 orders / minute**
+- BullMQ worker
+- Configured for:
+  - **10 concurrent orders**
+  - **100 orders / minute**
 
 ```ts
 concurrency: 10,
@@ -140,12 +138,11 @@ limiter: {
 
 ### 7️⃣ Retry & Failure Handling
 
-* Automatic retries with exponential backoff
-* Max retries: **3 attempts**
-* If still unsuccessful:
-
-  * Order marked as `FAILED`
-  * Failure reason persisted separately
+- Automatic retries with exponential backoff
+- Max retries: **3 attempts**
+- If still unsuccessful:
+  - Order marked as `FAILED`
+  - Failure reason persisted separately
 
 📌 **Design choice:**
 Failure reasons are stored in a **dedicated table**, not on the order row.
@@ -241,18 +238,18 @@ wscat -c "ws://localhost:3000/ws/orders?orderId=ord_xxx"
 
 You will receive:
 
-* Initial `SNAPSHOT`
-* Streaming `EVENT`s
+- Initial `SNAPSHOT`
+- Streaming `EVENT`s
 
 ---
 
 ## 🧠 Design Decisions (Why This Matters)
 
-* **Redis Active Orders** instead of DB polling
-* **In-memory WS map** + Redis snapshot (industry pattern)
-* **Failure history decoupled from order state**
-* **Queue-based execution** for backpressure & retries
-* **WebSocket-first UX** for real-time trading workflows
+- **Redis Active Orders** instead of DB polling
+- **In-memory WS map** + Redis snapshot (industry pattern)
+- **Failure history decoupled from order state**
+- **Queue-based execution** for backpressure & retries
+- **WebSocket-first UX** for real-time trading workflows
 
 This mirrors how real exchanges and execution engines operate.
 
@@ -260,11 +257,11 @@ This mirrors how real exchanges and execution engines operate.
 
 ## 🚧 Future Enhancements
 
-* Redis Pub/Sub for multi-instance WS fanout
-* Limit & Sniper orders
-* Devnet integration (Raydium / Meteora)
-* Order timeline API (merge DB + failures)
-* Observability (metrics, tracing)
+- Redis Pub/Sub for multi-instance WS fanout
+- Limit & Sniper orders
+- Devnet integration (Raydium / Meteora)
+- Order timeline API (merge DB + failures)
+- Observability (metrics, tracing)
 
 ---
 
