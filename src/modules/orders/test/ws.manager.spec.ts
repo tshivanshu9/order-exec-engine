@@ -1,3 +1,4 @@
+import { WebSocket } from 'ws';
 import { wsManager } from '../websocket/ws.manager';
 
 describe('WebSocketManager', () => {

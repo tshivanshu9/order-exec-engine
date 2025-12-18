@@ -1,3 +1,4 @@
+import { WebSocket } from 'ws';
 class WebSocketManager {
   private orderSubscriptions = new Map<string, Set<WebSocket>>();
 
