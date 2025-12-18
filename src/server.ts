@@ -7,6 +7,11 @@ import { runMigrations } from './db/migrate';
 
 const server = Fastify({ logger: true });
 
+server.get('/', async () => {
+  return { status: 'ok' };
+});
+
+
 server.register(websocket);
 server.register(app);
 
