@@ -13,8 +13,10 @@ server.register(app);
 const start = async () => {
   try {
     await initDatabase();
-    await server.listen({ port: 3000 });
-    console.log('Server running on http://localhost:3000');
+    const port = Number(process.env.PORT) || 3000;
+    const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+    await server.listen({ port, host });
+    console.log(`Server running on http://${host}:${port}`);
   } catch (err) {
     server.log.error(err);
     process.exit(1);
